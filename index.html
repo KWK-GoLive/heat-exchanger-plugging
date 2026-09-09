@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>How Many Tubes Can We Plug?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root, :root[data-theme="dark"], :root[data-theme="light"]{
+  color-scheme:light;
+  --ground:#FFFFFF; --panel:#FFFFFF; --panel-2:#F3F5F5; --rule:#C3CCCB; --rule-soft:#E1E7E6;
+  --ink:#10171A; --ink-2:#3B4847; --ink-3:#5A6866;
+  --c1:#0A7A91; --c2:#BF4715; --c3:#3A4FA8;
+  --good:#1F6B41; --warn:#96590F; --bad:#A32F16;
+  --grid:#E3E9E8;
+  --shadow:0 1px 2px rgba(16,23,26,.05), 0 10px 28px -20px rgba(16,23,26,.25);
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 18px 72px;display:flex;flex-direction:column;gap:26px}
+h1,h2,h3{margin:0;font-family:var(--disp);text-wrap:balance;letter-spacing:-.015em}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0}
+:focus-visible{outline:2px solid var(--c1);outline-offset:3px}
+
+.mast{display:flex;flex-direction:column;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:18px}
+.mast-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.mast h1{font-size:clamp(28px,5.2vw,44px);font-weight:800;line-height:1.03}
+.mast p.lede{margin:0;max-width:62ch;color:var(--ink-2);font-size:16px}
+.tagblock{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink-3)}
+.tagblock b{color:var(--ink);font-weight:600}
+@media(min-width:640px){.tagblock{text-align:right;white-space:nowrap}}
+
+section{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--rule-soft);border-radius:3px;padding:20px}
+@media(max-width:520px){.panel{padding:15px}.wrap{gap:22px}}
+.sechead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sechead h2{font-size:19px;font-weight:700}
+.sechead .note{color:var(--ink-3);font-size:13px}
+
+.sheet{width:100%;border-collapse:collapse;font-size:13.5px}
+.sheet caption{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);text-align:left;padding-bottom:8px}
+.sheet th,.sheet td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--rule-soft)}
+.sheet th:first-child,.sheet td:first-child{text-align:left;padding-left:0}
+.sheet td:last-child,.sheet th:last-child{padding-right:0}
+.sheet thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;border-bottom:1px solid var(--rule);vertical-align:bottom}
+.sheet td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sheet tbody tr:last-child td{border-bottom:none}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:22px 34px}
+.two>div{min-width:0}
+
+.rules{list-style:none;margin:0;padding:0}
+.rules li{display:grid;grid-template-columns:24px 1fr;gap:11px;padding:11px 0;
+  border-bottom:1px solid var(--rule-soft);font-size:14px}
+.rules li:last-child{border-bottom:none}
+.rules .k{font-family:var(--mono);font-size:11px;color:var(--ink-3);padding-top:3px}
+.rules code{font-family:var(--mono);font-size:12.5px;background:var(--panel-2);padding:1px 5px;border-radius:2px}
+
+/* NDT report — a findings docket, not a card grid */
+.ndt{display:grid;grid-template-columns:1fr;gap:0}
+.ndt-row{display:grid;grid-template-columns:14px 62px 1fr;gap:14px;align-items:baseline;
+  padding:13px 0;border-bottom:1px solid var(--rule-soft)}
+.ndt-row:last-child{border-bottom:none}
+.flag{width:12px;height:12px;border-radius:2px;align-self:center}
+.ndt-n{font-family:var(--mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.ndt-t{font-size:14px;color:var(--ink-2)}
+.ndt-t b{color:var(--ink);font-weight:600;display:block;font-family:var(--sans);font-size:13px;
+  letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px}
+
+.chartbox{position:relative}
+.chartbox svg{display:block;width:100%;height:auto;overflow:hidden}
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--panel);
+  border:1px solid var(--rule);box-shadow:var(--shadow);border-radius:3px;padding:8px 10px;font-size:12px;
+  font-family:var(--mono);white-space:nowrap;z-index:5;line-height:1.5;max-width:96%}
+.tip b{font-weight:600;display:block;margin-bottom:3px;font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3)}
+.tip i{font-style:normal;color:var(--ink-3)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);font-family:var(--mono);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.swatch{width:14px;height:3px;border-radius:2px;flex:none}
+.swatch.dot{width:9px;height:9px;border-radius:50%}
+.cap{font-size:13.5px;color:var(--ink-2);margin:14px 0 0;max-width:70ch}
+
+.call{background:var(--panel);border:2px solid var(--ink);border-radius:3px;padding:20px;
+  display:flex;flex-direction:column;gap:18px}
+.callgrid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:720px){.callgrid{grid-template-columns:1.4fr 1fr;align-items:start;gap:34px}}
+input[type=range]{width:100%;accent-color:var(--c2);height:44px;margin:0;display:block;cursor:pointer}
+.bigN{font-family:var(--mono);font-size:clamp(38px,8vw,56px);font-weight:600;line-height:1;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--c2)}
+.bigN sub{font-size:14px;font-weight:400;color:var(--ink-3);letter-spacing:0;vertical-align:baseline;margin-left:8px}
+.implied{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:0 22px;
+  border-top:1px solid var(--rule-soft);padding-top:10px;margin:0}
+.implied div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px;
+  border-bottom:1px solid var(--rule-soft)}
+.implied dt{color:var(--ink-3)}
+.implied dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+button.primary{font-family:var(--disp);font-weight:700;font-size:15px;background:var(--ink);color:#fff;
+  border:none;padding:14px 26px;border-radius:2px;cursor:pointer;align-self:flex-start;min-height:46px}
+button.primary:hover{background:var(--c2)}
+button.ghost{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  background:none;border:1px solid var(--rule);color:var(--ink-2);padding:11px 18px;border-radius:2px;
+  cursor:pointer;min-height:44px}
+button.ghost:hover{border-color:var(--ink-3);color:var(--ink)}
+
+.verdict{border-left:4px solid var(--c2);background:var(--panel);padding:16px 18px;border-radius:0 3px 3px 0;
+  display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--rule-soft);
+  border-right:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft)}
+.verdict.good{border-left-color:var(--good)}
+.verdict.warn{border-left-color:var(--warn)}
+.verdict.bad{border-left-color:var(--bad)}
+.verdict h3{font-size:22px;font-weight:800}
+.verdict p{margin:0;color:var(--ink-2);max-width:68ch}
+.vstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:6px}
+.vstat{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--rule);padding-top:8px}
+.vstat .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.vstat .val{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* the calculation chain — a worked column, numbered by step */
+.chain{width:100%;border-collapse:collapse;font-size:13.5px}
+.chain td,.chain th{padding:9px 10px;border-bottom:1px solid var(--rule-soft);vertical-align:baseline}
+.chain thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;text-align:left;border-bottom:1px solid var(--rule)}
+.chain .step{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:26px;padding-left:0}
+.chain .sym{font-family:var(--mono);white-space:nowrap;width:1%}
+.chain .val{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;
+  font-weight:500;width:1%}
+.chain .src{color:var(--ink-3);font-size:12px;text-align:right;white-space:nowrap;padding-right:0;width:1%}
+.chain tr:last-child td{border-bottom:none}
+.chain tr.hi td{background:var(--panel-2)}
+
+.eq{font-family:var(--mono);font-size:13px;background:var(--panel-2);border-left:2px solid var(--c1);
+  padding:11px 14px;border-radius:0 2px 2px 0;overflow-x:auto;white-space:nowrap}
+.eqs{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:8px 26px}
+.slider label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:var(--ink-2)}
+.slider label b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);font-weight:500}
+.hidden{display:none}
+.foot{font-size:12.5px;color:var(--ink-3);max-width:74ch;border-top:1px solid var(--rule-soft);padding-top:16px}
+.mark{background:var(--panel-2);padding:1px 5px;border-radius:2px;font-family:var(--mono);font-size:12.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <div class="mast-top">
+    <div>
+      <p class="eyebrow">Milk heater, hot-water service &middot; Case Study 2</p>
+      <h1>How Many Tubes Can We Plug?</h1>
+    </div>
+    <div class="tagblock">
+      TUBES <b>230 &middot; OD 20 / ID 18 mm &middot; 5 m</b><br>
+      PASSES <b>1 shell / 2 tube</b><br>
+      DUTY <b>1,268.7 kW</b>
+    </div>
+  </div>
+  <p class="lede">Corrosion has thinned the tubes. Plugging a leaking tube is quick and cheap, and it
+  keeps the shell and tube sides apart &mdash; but every plug you drive takes area away. Plug too many and
+  the exchanger can no longer make its duty, and the answer becomes a re-tube. <b>Read the NDT report,
+  then call it: how many tubes can you plug and still run?</b></p>
+</header>
+
+<section>
+  <div class="sechead"><h2>1 &nbsp;The exchanger</h2><span class="note">As built, and as operating</span></div>
+  <div class="panel two">
+    <div class="scroll">
+      <table class="sheet">
+        <caption>Duty and streams</caption>
+        <thead><tr><th>Property</th><th>Shell<br>(hot water)</th><th>Tube<br>(milk)</th></tr></thead>
+        <tbody>
+          <tr><td>Flow rate, kg/s</td><td class="n">5.00</td><td class="n">6.07</td></tr>
+          <tr><td>c<sub>p</sub>, kJ/kg&middot;K</td><td class="n">4.229</td><td class="n">4.18</td></tr>
+          <tr><td>T in, &deg;C</td><td class="n">140</td><td class="n">20</td></tr>
+          <tr><td>T out, &deg;C</td><td class="n">80</td><td class="n">70</td></tr>
+          <tr><td>Q, kW</td><td class="n" colspan="2">1,268.7</td></tr>
+          <tr><td>&Delta;T<sub>lm</sub>, &deg;C &nbsp;/&nbsp; F</td><td class="n" colspan="2">64.87 &nbsp;/&nbsp; 0.8669</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="scroll">
+      <table class="sheet">
+        <caption>Milk properties &amp; coefficients</caption>
+        <thead><tr><th>Item</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>&rho;</td><td class="n">990.1 kg/m&sup3;</td></tr>
+          <tr><td>&mu;</td><td class="n">0.596&times;10<sup>&minus;3</sup> kg/m&middot;s</td></tr>
+          <tr><td>k</td><td class="n">0.637 W/m&middot;K</td></tr>
+          <tr><td>Pr</td><td class="n">3.91</td></tr>
+          <tr><td>h<sub>o</sub> (shell, fixed)</td><td class="n">450 W/m&sup2;&middot;K</td></tr>
+          <tr><td>h<sub>i</sub> quoted at design</td><td class="n">1,200 W/m&sup2;&middot;K</td></tr><tr><td colspan="2" style="color:var(--ink-3);font-size:12px;text-align:left;padding-left:0">h<sub>i</sub> is computed from the correlation at every tube count, never taken from that figure.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><h2>2 &nbsp;The NDT report</h2><span class="note">Wall-thickness survey, all 230 tubes</span></div>
+  <div class="panel">
+    <div class="ndt">
+      <div class="ndt-row">
+        <i class="flag" style="background:var(--bad)"></i>
+        <span class="ndt-n">10</span>
+        <span class="ndt-t"><b>Red flag</b>Severe wall loss, cracking or active leaks. These must be
+          plugged &mdash; a leak here cross-contaminates milk with heating water.</span>
+      </div>
+      <div class="ndt-row">
+        <i class="flag" style="background:var(--warn)"></i>
+        <span class="ndt-n">30</span>
+        <span class="ndt-t"><b>Yellow flag</b>Moderate wall thinning. Serviceable today, likely to fail
+          before the next shutdown. Plug them if the exchanger can spare the area.</span>
+      </div>
+      <div class="ndt-row">
+        <i class="flag" style="background:var(--rule)"></i>
+        <span class="ndt-n">190</span>
+        <span class="ndt-t"><b>Sound</b>No action.</span>
+      </div>
+    </div>
+    <p class="cap">Operations will accept whatever number you sign off, and will plug in priority
+      order &mdash; red flags first, then yellow. What they need from you is the limit.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><h2>3 &nbsp;How the rating works</h2><span class="note">Two effects, pulling opposite ways</span></div>
+  <div class="panel">
+    <ul class="rules">
+      <li><span class="k">01</span><span>Plugging removes tubes, so the <b>available area</b> falls:
+        <code>A_a = n<sub>tubes</sub> &times; &pi; d<sub>o</sub> L</code>.</span></li>
+      <li><span class="k">02</span><span>The same milk flow now passes through fewer tubes, so the velocity
+        <em>rises</em> &mdash; and with it Re, Nu and h<sub>i</sub>. A plugged exchanger is a better
+        heat-transfer surface per square metre than a full one.</span></li>
+      <li><span class="k">03</span><span>A higher h<sub>i</sub> raises U<sub>d</sub>, which lowers the
+        <b>required area</b>: <code>A_r = Q / (U<sub>d</sub> F &Delta;T<sub>lm</sub>)</code>. So both
+        curves fall. The question is which falls faster.</span></li>
+      <li><span class="k">04</span><span>Nusselt depends on the flow regime, and plugging can move you
+        between them: <code>Re &lt; 2100</code> laminar, <code>2100&ndash;10,000</code> transition,
+        <code>&gt; 10,000</code> turbulent. Pick the wrong correlation and h<sub>i</sub> is meaningless.</span></li>
+      <li><span class="k">05</span><span>The exchanger is <b>operable</b> while
+        <code>A_a &ge; A_r</code>. F is computed from P and R rather than assumed, and comes out at
+        0.8669 for these temperatures. Duty, inlet temperatures and h<sub>o</sub> are fixed;
+        fouling is neglected.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="callsec">
+  <div class="sechead"><h2>4 &nbsp;Your call</h2><span class="note">The number you sign off to operations</span></div>
+  <div class="call">
+    <div class="callgrid">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <p class="eyebrow">We can plug up to</p>
+        <div class="bigN"><span id="nPick">40</span><sub>tubes</sub></div>
+        <input type="range" id="nSlider" min="0" max="120" step="1" value="40"
+               aria-label="Number of tubes to plug">
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-3)">
+          <span>0 &mdash; plug nothing</span><span>120 &mdash; half the bundle</span>
+        </div>
+      </div>
+      <dl class="implied">
+        <div><dt>Tubes left</dt><dd id="iTubes">&mdash;</dd></div>
+        <div><dt>Velocity</dt><dd id="iV">&mdash;</dd></div>
+        <div><dt>Reynolds</dt><dd id="iRe">&mdash;</dd></div>
+        <div><dt>Regime</dt><dd id="iReg">&mdash;</dd></div>
+      </dl>
+    </div>
+    <button class="primary" id="commit" type="button">Sign off this number</button>
+  </div>
+</section>
+
+<section id="debrief" class="hidden" aria-live="polite" tabindex="-1">
+  <div class="sechead"><h2>5 &nbsp;Debrief</h2><span class="note">Now the answer</span></div>
+
+  <div class="verdict" id="verdict">
+    <h3 id="vTitle">&mdash;</h3>
+    <p id="vBody">&mdash;</p>
+    <div class="vstats">
+      <div class="vstat"><span class="lab">Your number</span><span class="val" id="vN">&mdash;</span></div>
+      <div class="vstat"><span class="lab">The limit</span><span class="val" id="vLim">&mdash;</span></div>
+      <div class="vstat"><span class="lab">A available</span><span class="val" id="vAa">&mdash;</span></div>
+      <div class="vstat"><span class="lab">A required</span><span class="val" id="vAr">&mdash;</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="sechead" style="margin-bottom:12px">
+      <h2 style="font-size:16px">Available against required area</h2>
+      <span class="note">both fall as you plug &mdash; they cross once</span></div>
+    <div class="chartbox" id="ch-area"></div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--c1)"></i>A available</span>
+      <span><i class="swatch" style="background:var(--c2)"></i>A required</span>
+      <span><i class="swatch dot" style="background:var(--good)"></i>The limit</span>
+      <span><i class="swatch dot" style="background:var(--c3)"></i>Your call</span>
+    </div>
+    <p class="cap" id="capArea">&mdash;</p>
+  </div>
+
+  <div class="panel">
+    <div class="sechead" style="margin-bottom:12px">
+      <h2 style="font-size:16px">The rating chain at your number</h2>
+      <span class="note" id="chainNote">&mdash;</span></div>
+    <div class="scroll">
+      <table class="chain" id="chainTbl">
+        <thead><tr><th></th><th>Quantity</th><th></th><th style="text-align:right">Value</th><th style="text-align:right">From</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="eqs">
+      <div class="eq">v = m&#775; / [ &rho; &middot; (n<sub>T</sub> &minus; n<sub>plug</sub>)/N<sub>pass</sub> &middot; &pi;d<sub>i</sub>&sup2;/4 ]&nbsp;&nbsp;&middot;&nbsp;&nbsp;Re = &rho;vd<sub>i</sub>/&mu;&nbsp;&nbsp;&middot;&nbsp;&nbsp;Pr = c<sub>p</sub>&mu;/k</div>
+      <div class="eq">Nu = 1.86 Re<sup>0.33</sup>Pr<sup>0.33</sup>&nbsp;|&nbsp;0.116(Re<sup>2/3</sup> &minus; 125)Pr<sup>0.33</sup>&nbsp;|&nbsp;0.023 Re<sup>0.8</sup>Pr<sup>0.33</sup>&nbsp;&nbsp;&rarr;&nbsp;&nbsp;h<sub>i</sub> = Nu&middot;k/d<sub>i</sub></div>
+      <div class="eq">1/U<sub>d</sub> = 1/h<sub>o</sub> + 1/h<sub>i</sub>&nbsp;&nbsp;&middot;&nbsp;&nbsp;A<sub>r</sub> = Q / (U<sub>d</sub> F &Delta;T<sub>lm</sub>)&nbsp;&nbsp;&middot;&nbsp;&nbsp;A<sub>a</sub> = n<sub>T</sub> &pi; d<sub>o</sub> L</div>
+    </div>
+  </div>
+
+  <div class="panel" id="ndtPanel">
+    <div class="sechead" style="margin-bottom:12px">
+      <h2 style="font-size:16px">What to tell operations</h2>
+      <span class="note">applying the limit to the NDT report</span></div>
+    <div class="scroll">
+      <table class="sheet" id="ndtOut"><tbody></tbody></table>
+    </div>
+    <p class="cap" id="ndtCap">&mdash;</p>
+  </div>
+
+  <div class="panel">
+    <div class="sechead" style="margin-bottom:14px">
+      <h2 style="font-size:16px">What if the exchanger were different?</h2>
+      <span class="note">move a lever, watch the limit move</span></div>
+    <div class="sliders">
+      <div class="slider"><label for="sHo"><span>Shell coefficient h<sub>o</sub></span><b><span id="lHo">450</span> W/m²K</b></label>
+        <input type="range" id="sHo" min="200" max="2000" step="25" value="450"></div>
+      <div class="slider"><label for="sMc"><span>Milk flow</span><b><span id="lMc">6.07</span> kg/s</b></label>
+        <input type="range" id="sMc" min="4" max="9" step="0.01" value="6.07"></div>
+      <div class="slider"><label for="sNT"><span>Tubes in bundle</span><b><span id="lNT">230</span></b></label>
+        <input type="range" id="sNT" min="160" max="340" step="5" value="230"></div>
+    </div>
+    <div class="vstats" style="margin-top:16px;border-top:1px solid var(--rule);padding-top:14px">
+      <div class="vstat" style="border:none;padding:0"><span class="lab">Plugging limit</span>
+        <span class="val" id="sLim">&mdash;</span></div>
+      <div class="vstat" style="border:none;padding:0"><span class="lab">Duty required</span>
+        <span class="val" id="sQ">&mdash;</span></div>
+      <div class="vstat" style="border:none;padding:0"><span class="lab">Water outlet</span>
+        <span class="val" id="sTho">&mdash;</span></div>
+      <div class="vstat" style="border:none;padding:0"><span class="lab">F factor</span>
+        <span class="val" id="sF">&mdash;</span></div>
+      <div class="vstat" style="border:none;padding:0"><span class="lab">Controlling side</span>
+        <span class="val" id="sCtrl">&mdash;</span></div>
+    </div>
+    <div style="margin-top:14px"><button class="ghost" id="sReset" type="button">Reset</button></div>
+    <p class="cap">Milk flow is throughput, so it sets the duty: the milk must still reach 70 °C, and
+      the hot water &mdash; still 5 kg/s at 140 °C &mdash; simply leaves colder. Push the flow up and
+      Q rises while &Delta;T<sub>lm</sub> and F both fall, so the required area climbs from three
+      directions at once and the plugging limit collapses. At 6.5 kg/s, only 7% above design, this
+      exchanger cannot make its duty with <em>nothing</em> plugged. Past about 8.9 kg/s a 1 shell /
+      2 tube arrangement runs out of correction factor altogether &mdash; F collapses towards zero and
+      no amount of area helps. That is the arrangement failing, not a temperature cross: the water is
+      still leaving near 52 &deg;C, well above the milk inlet. The fix there is more shell passes, or
+      two exchangers in series.</p>
+    <p class="cap">h<sub>o</sub> is the strongest lever here, precisely because the shell carries about
+      three quarters of the resistance &mdash; doubling it takes the limit from 24 tubes to over a
+      hundred. Plugging raises h<sub>i</sub>, the side that was never controlling, which is why it
+      buys so little.</p>
+  </div>
+
+  <button class="ghost" id="again" type="button" style="align-self:flex-start">Make another call</button>
+</section>
+
+<p class="foot">Built on Case Study 2 of <i>Heat Transfer &mdash; Application: Shell &amp; Tube Heat
+Exchanger 4</i> (Kritchart Wongwailikhit, Ph.D., Heat and Mass Transfer System), slides 22&ndash;32.
+The app follows the lecture&rsquo;s conventions for area and resistance &mdash; available area on the
+tube OD, 1/U<sub>d</sub> = 1/h<sub>o</sub> + 1/h<sub>i</sub> without area correction &mdash; but computes
+the LMTD correction factor from P and R rather than reading it off a chart, giving F = 0.8669 where the
+lecture rounds to 0.86. On the lecture&rsquo;s own U<sub>d</sub> that change alone takes the required area
+from 66.31 to 65.78 m²; the app reaches 65.70 because it also evaluates the transition correlation at
+Re<sup>2/3</sup> &mdash; the exponent the lecture&rsquo;s own Nu = 40.74 corresponds to &mdash; rather than
+the Re<sup>0.67</sup> printed beside it. Together they move the plugging limit from 21 to 24. Conventions matter here: computing the available area on the tube ID instead, or
+area-correcting U<sub>d</sub>, would move the limit much further.</p>
+
+</div>
+
+<script>
+"use strict";
+(function(){
+/* ===================== MODEL — lecture conventions, slides 22–32 ===================== */
+var MH=5.0, CPH=4.229, THI=140, THO=80;
+var MC0=6.07, CPC=4180, TCI=20;
+var RHO=990.1, MU=0.596e-3, KF=0.637;
+var OD=0.020, ID=0.018, LEN=5.0, NT0=230, NPASS=2, HO0=450;
+var TCO=70;                                  /* process spec: the milk must reach 70 °C */
+var CH=MH*CPH*1000;                          /* hot-side capacity rate, W/K */
+var Q0=CH*(THI-THO);                         /* 1,268,700 W at the design milk flow */
+var PR=CPC*MU/KF;                            /* 3.911 */
+var AFLOW=Math.PI*ID*ID/4;
+
+/* LMTD correction factor, 1 shell pass / 2 tube passes (Bowman) — computed, not assumed */
+function Fof(P,R){
+  if(Math.abs(R-1)<1e-6) R=1+1e-6;
+  var sq=Math.sqrt(R*R+1);
+  var a=(1-P)/(1-P*R), b=(2-P*(R+1-sq))/(2-P*(R+1+sq));
+  if(!(a>0)||!(b>0)) return null;
+  var f=(sq/(R-1))*Math.log(a)/Math.log(b);
+  return (f>0&&f<=1.0001)?Math.min(f,1):null;
+}
+/* Duty and driving force for a configuration. The milk flow sets the duty — it must be heated
+   20 → 70 °C — and the water outlet floats to suit. Returns null where no 1-2 exchanger can do it. */
+function duty(C){
+  var Q=Q0*(C.mc/MC0);
+  var tho=THI-Q/CH;
+  var d1=THI-TCO, d2=tho-TCI;
+  if(d2<=0.5) return null;                   /* water leaves at or below the milk inlet */
+  var lm=(Math.abs(d1-d2)<1e-9)?d1:(d1-d2)/Math.log(d1/d2);
+  var F=Fof((TCO-TCI)/(THI-TCI),(THI-tho)/(TCO-TCI));
+  if(F===null) return null;                  /* beyond the reach of a 1-2 arrangement */
+  return {Q:Q,tho:tho,lmtd:lm,F:F};
+}
+function nusselt(Re){
+  if(Re<2100)  return {Nu:1.86*Math.pow(Re,1/3)*Math.pow(PR,1/3), reg:"laminar",
+                       eq:"1.86 Re^0.33 Pr^0.33"};
+  if(Re<1e4)   return {Nu:0.116*(Math.pow(Re,2/3)-125)*Math.pow(PR,0.33), reg:"transition",
+                       eq:"0.116(Re^2/3 − 125) Pr^0.33"};
+  return {Nu:0.023*Math.pow(Re,0.8)*Math.pow(PR,0.33), reg:"turbulent",
+          eq:"0.023 Re^0.8 Pr^0.33"};
+}
+/* state at n plugged tubes, for a given plant configuration */
+function state(n,C){
+  C=C||{ho:HO0,mc:MC0,nt:NT0};
+  var left=C.nt-n;
+  if(left<2) return null;
+  var D=duty(C);
+  if(!D) return null;
+  var v=C.mc/(RHO*(left/NPASS)*AFLOW);
+  var Re=RHO*v*ID/MU;
+  var nu=nusselt(Re);
+  var hi=nu.Nu*KF/ID;
+  var Ud=1/(1/C.ho+1/hi);
+  var Aa=left*Math.PI*OD*LEN;
+  var Ar=D.Q/(Ud*D.F*D.lmtd);
+  return {n:n,left:left,Q:D.Q,tho:D.tho,lmtd:D.lmtd,F:D.F,v:v,Re:Re,Nu:nu.Nu,reg:nu.reg,eq:nu.eq,
+          hi:hi,Ud:Ud,Aa:Aa,Ar:Ar,margin:Aa-Ar};
+}
+/* largest n with a positive margin, plus the exact crossing */
+function limitOf(C){
+  var s0=state(0,C);
+  if(!s0||s0.margin<=0) return {n:-1,cross:0};
+  var lo=0, hi=(C?C.nt:NT0)-3, i, m, s;
+  for(i=0;i<60;i++){
+    m=(lo+hi)/2; s=state(m,C);
+    if(s&&s.margin>0) lo=m; else hi=m;
+  }
+  var whole=Math.floor(lo);
+  while(whole>0){ s=state(whole,C); if(s&&s.margin>0) break; whole--; }
+  return {n:whole,cross:lo};
+}
+var LIM=limitOf(null);
+var REGN=(function(){                        /* n at which Re crosses 10,000 */
+  for(var n=0;n<200;n++){ var s=state(n,null); if(s&&s.Re>=1e4) return n; }
+  return null;
+})();
+
+function f1(x){return x.toFixed(1);}
+function f2(x){return x.toFixed(2);}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+/* ===================== CHART ENGINE ===================== */
+function niceTicks(a,b,n){
+  var lo=Math.min(a,b), hi=Math.max(a,b), span=hi-lo;
+  if(!(span>0)||!isFinite(span)) return [];
+  var step=Math.pow(10,Math.floor(Math.log(span/n)/Math.LN10)), err=span/n/step;
+  if(err>=5)step*=10; else if(err>=2)step*=5; else if(err>=1)step*=2;
+  var out=[], v=Math.ceil(lo/step)*step, guard=0;
+  for(;v<=hi+step*1e-6 && guard<200;v+=step,guard++) out.push(Math.abs(v)<step*1e-9?0:v);
+  return out;
+}
+var NS="http://www.w3.org/2000/svg";
+function mk(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+
+function drawChart(host,cfg){
+  host.innerHTML="";
+  var W=Math.max(280,Math.round(host.clientWidth||820));
+  var narrow=W<560, tiny=W<400;
+  var H=narrow?Math.max(240,Math.round(Math.min(cfg.height||330,W*0.9))):(cfg.height||330);
+  var M=narrow?{l:44,r:12,t:16,b:tiny?52:50}:{l:70,r:26,t:18,b:52};
+  var FS=narrow?10.5:11, FSA=narrow?10.5:11.5;
+  var iw=W-M.l-M.r, ih=H-M.t-M.b;
+  var xd=cfg.xDomain, yd=cfg.yDomain, xr=xd[1]-xd[0], yr=yd[1]-yd[0];
+  var X=function(v){return M.l+(v-xd[0])/xr*iw;};
+  var Y=function(v){return M.t+ih-(v-yd[0])/yr*ih;};
+  var inY=function(v){return v>=Math.min(yd[0],yd[1])&&v<=Math.max(yd[0],yd[1]);};
+  var svg=mk("svg",{viewBox:"0 0 "+W+" "+H,width:W,height:H,role:"img","aria-label":cfg.aria||""});
+  var GRID=css("--grid")||"#e3e9e8", INK3=css("--ink-3")||"#5A6866",
+      INK2=css("--ink-2")||"#3B4847", PANEL=css("--panel")||"#fff";
+  var i,g;
+  var yt=niceTicks(yd[0],yd[1],narrow?4:5);
+  for(i=0;i<yt.length;i++){
+    svg.appendChild(mk("line",{x1:M.l,x2:M.l+iw,y1:Y(yt[i]),y2:Y(yt[i]),stroke:GRID,"stroke-width":1}));
+    g=mk("text",{x:M.l-8,y:Y(yt[i])+4,"text-anchor":"end",fill:INK3,"font-size":FS,
+      "font-family":"IBM Plex Mono, monospace"}); g.textContent=yt[i]; svg.appendChild(g);
+  }
+  var xt=niceTicks(xd[0],xd[1],narrow?4:6);
+  for(i=0;i<xt.length;i++){
+    if(X(xt[i])<M.l-1||X(xt[i])>M.l+iw+1) continue;
+    svg.appendChild(mk("line",{x1:X(xt[i]),x2:X(xt[i]),y1:M.t+ih,y2:M.t+ih+5,stroke:GRID,"stroke-width":1}));
+    g=mk("text",{x:X(xt[i]),y:M.t+ih+19,"text-anchor":"middle",fill:INK3,"font-size":FS,
+      "font-family":"IBM Plex Mono, monospace"}); g.textContent=xt[i]; svg.appendChild(g);
+  }
+  svg.appendChild(mk("line",{x1:M.l,x2:M.l+iw,y1:M.t+ih,y2:M.t+ih,stroke:INK3,"stroke-width":1}));
+  g=mk("text",{x:M.l+iw/2,y:H-6,"text-anchor":"middle",fill:INK2,"font-size":FSA,
+    "font-family":"IBM Plex Mono, monospace","letter-spacing":"0.05em"});
+  g.textContent=narrow?(cfg.xLabelShort||cfg.xLabel):cfg.xLabel; svg.appendChild(g);
+  g=mk("text",{x:11,y:M.t+ih/2,"text-anchor":"middle",fill:INK2,"font-size":FSA,
+    "font-family":"IBM Plex Mono, monospace","letter-spacing":"0.05em",
+    transform:"rotate(-90 11 "+(M.t+ih/2)+")"});
+  g.textContent=narrow?(cfg.yLabelShort||cfg.yLabel):cfg.yLabel; svg.appendChild(g);
+
+  (cfg.bands||[]).forEach(function(b){
+    var x0=X(b.from), x1=X(b.to);
+    svg.appendChild(mk("line",{x1:x0,x2:x0,y1:M.t,y2:M.t+ih,stroke:INK3,"stroke-width":1,
+      "stroke-dasharray":"2 4",opacity:.55}));
+    if(b.label&&x0<M.l+iw-40){
+      var tb=mk("text",{x:x0+6,y:M.t+12,fill:INK3,"font-size":narrow?9.5:10.5,
+        "font-family":"IBM Plex Mono, monospace"});
+      tb.textContent=b.label; svg.appendChild(tb);
+    }
+  });
+  (cfg.series||[]).forEach(function(s){
+    var d="",pen=false,k,p;
+    for(k=0;k<s.pts.length;k++){
+      p=s.pts[k];
+      if(p[1]===null||!isFinite(p[1])||!inY(p[1])){pen=false;continue;}
+      d+=(pen?"L":(d?" M":"M"))+X(p[0]).toFixed(2)+" "+Y(p[1]).toFixed(2); pen=true;
+    }
+    if(!d) return;
+    svg.appendChild(mk("path",{d:d,fill:"none",stroke:s.color,"stroke-width":s.width||2.5,
+      "stroke-linecap":"round","stroke-linejoin":"round"}));
+  });
+  (cfg.markers||[]).forEach(function(m){
+    if(!inY(m.y)) return;
+    var cx=X(m.x), cy=Y(m.y);
+    if(cx<M.l-2||cx>M.l+iw+2) return;
+    if(m.vline) svg.appendChild(mk("line",{x1:cx,x2:cx,y1:M.t,y2:M.t+ih,stroke:m.color,
+      "stroke-width":1.5,"stroke-dasharray":"3 4",opacity:.65}));
+    svg.appendChild(mk("circle",{cx:cx,cy:cy,r:m.r||(narrow?5:5.5),fill:m.color,stroke:PANEL,"stroke-width":2}));
+    if(!m.label) return;
+    var fs=narrow?10.5:11.5, half=m.label.length*fs*0.31;
+    var lx=Math.max(M.l+half,Math.min(M.l+iw-half,cx));
+    var ly=m.below?cy+fs+9:cy-11;
+    ly=Math.max(M.t+fs,Math.min(M.t+ih-3,ly));
+    var tx=mk("text",{x:lx,y:ly,"text-anchor":"middle",fill:m.color,"font-size":fs,"font-weight":600,
+      "font-family":"IBM Plex Mono, monospace","paint-order":"stroke",stroke:PANEL,"stroke-width":3,
+      "stroke-linejoin":"round"});
+    tx.textContent=m.label; svg.appendChild(tx);
+  });
+  var cross=mk("line",{x1:0,x2:0,y1:M.t,y2:M.t+ih,stroke:INK3,"stroke-width":1,opacity:0});
+  svg.appendChild(cross);
+  var hit=mk("rect",{x:M.l,y:M.t,width:iw,height:ih,fill:"transparent",style:"cursor:crosshair"});
+  svg.appendChild(hit);
+  host.appendChild(svg);
+  var tip=document.createElement("div"); tip.className="tip"; host.appendChild(tip);
+  if(cfg.tooltip){
+    var xlo=Math.min(xd[0],xd[1]), xhi=Math.max(xd[0],xd[1]);
+    var hide=function(){tip.style.opacity=0;cross.setAttribute("opacity",0);};
+    var move=function(ev){
+      var r=svg.getBoundingClientRect();
+      var cxp=(ev.touches&&ev.touches[0]?ev.touches[0].clientX:ev.clientX);
+      if(cxp==null) return;
+      var xv=xd[0]+(((cxp-r.left)/r.width*W)-M.l)/iw*xr;
+      xv=Math.max(xlo,Math.min(xhi,xv));
+      var info=cfg.tooltip(xv);
+      if(!info){hide();return;}
+      cross.setAttribute("x1",X(info.x)); cross.setAttribute("x2",X(info.x)); cross.setAttribute("opacity",.45);
+      tip.innerHTML=info.html; tip.style.opacity=1;
+      var sc=r.width/W, sx=X(info.x)*sc, sy=(info.y!=null&&inY(info.y)?Y(info.y):M.t)*sc;
+      var tw=tip.offsetWidth, th=tip.offsetHeight;
+      tip.style.left=Math.max(2,Math.min(r.width-tw-2,sx+(sx>r.width*0.6?-tw-14:14)))+"px";
+      tip.style.top=Math.max(2,Math.min(r.height-th-2,sy-th/2))+"px";
+    };
+    hit.addEventListener("mousemove",move);
+    hit.addEventListener("mouseleave",hide);
+    hit.addEventListener("touchstart",move,{passive:true});
+    hit.addEventListener("touchmove",move,{passive:true});
+    hit.addEventListener("touchend",hide,{passive:true});
+  }
+}
+
+/* ===================== VIEW ===================== */
+var slider=document.getElementById("nSlider");
+var debrief=document.getElementById("debrief");
+
+function updImplied(){
+  var n=+slider.value, s=state(n,null);
+  document.getElementById("nPick").textContent=n;
+  if(!s){document.getElementById("iTubes").textContent="—";return;}
+  document.getElementById("iTubes").textContent=s.left;
+  document.getElementById("iV").textContent=f2(s.v)+" m/s";
+  document.getElementById("iRe").textContent=Math.round(s.Re).toLocaleString("en-US");
+  document.getElementById("iReg").textContent=s.reg;
+}
+slider.addEventListener("input",updImplied);
+updImplied();
+
+function areaChart(pick){
+  var aa=[],ar=[],n,s;
+  for(n=0;n<=120;n++){ s=state(n,null); if(!s) continue; aa.push([n,s.Aa]); ar.push([n,s.Ar]); }
+  var sl=state(LIM.n,null);
+  var marks=[{x:LIM.cross,y:sl.Ar,color:css("--good"),label:"limit "+LIM.n,vline:true}];
+  if(pick){ var sp=state(pick,null);
+    if(sp) marks.push({x:pick,y:sp.Aa,color:css("--c3"),label:"you",r:6.5,below:true}); }
+  drawChart(document.getElementById("ch-area"),{
+    height:340, xDomain:[0,120], yDomain:[30,78],
+    xLabel:"TUBES PLUGGED", xLabelShort:"TUBES PLUGGED",
+    yLabel:"AREA  (m²)", yLabelShort:"AREA m²",
+    aria:"Available and required area both falling as tubes are plugged, crossing at about 22 tubes",
+    bands:REGN!==null?[{from:REGN,to:120,label:"Re > 10,000"}]:[],
+    series:[{pts:aa,color:css("--c1")},{pts:ar,color:css("--c2")}],
+    markers:marks,
+    tooltip:function(x){
+      var nn=Math.round(x), st=state(nn,null); if(!st) return null;
+      return {x:nn,y:st.Aa,html:"<b>"+nn+" plugged</b>A avail <i>"+f2(st.Aa)+" m²</i><br>A req <i>"+
+        f2(st.Ar)+" m²</i><br>margin <i>"+(st.margin>=0?"+":"−")+f2(Math.abs(st.margin))+" m²</i><br>Re <i>"+
+        Math.round(st.Re).toLocaleString("en-US")+" "+st.reg+"</i>"};
+    }
+  });
+}
+
+function chain(n){
+  var s=state(n,null), b=document.querySelector("#chainTbl tbody");
+  document.getElementById("chainNote").textContent=n+" plugged, "+s.left+" tubes carrying the flow";
+  var rows=[
+    ["Tubes remaining","n<sub>T</sub> − n<sub>plug</sub>",s.left,"slide 25"],
+    ["Tubes per pass","÷ 2 passes",s.left/2,"slide 29"],
+    ["Velocity in a tube","v",f2(s.v)+" m/s","slide 30"],
+    ["Reynolds","Re",Math.round(s.Re).toLocaleString("en-US"),"slide 30"],
+    ["Flow regime","—",s.reg,"slide 24"],
+    ["Correlation used","Nu =",s.eq,"slide 24"],
+    ["Prandtl","Pr",f2(PR),"slide 31"],
+    ["Nusselt","Nu",f2(s.Nu),"slide 31"],
+    ["Tube coefficient","h<sub>i</sub>",Math.round(s.hi).toLocaleString("en-US")+" W/m²K","slide 31"],
+    ["Overall coefficient","U<sub>d</sub>",f2(s.Ud)+" W/m²K","slide 32"],
+    ["Log-mean driving force","&Delta;T<sub>lm</sub>",f2(s.lmtd)+" °C","slide 26"],
+    ["Correction factor","F",s.F.toFixed(4),"slide 27"],
+    ["Required area","A<sub>r</sub>",f2(s.Ar)+" m²","slide 32"],
+    ["Available area","A<sub>a</sub>",f2(s.Aa)+" m²","slide 25"],
+    ["Margin","A<sub>a</sub> − A<sub>r</sub>",(s.margin>=0?"+":"−")+f2(Math.abs(s.margin))+" m²",""]
+  ];
+  b.innerHTML=rows.map(function(r,i){
+    var val=(typeof r[2]==="number")?(Number.isInteger(r[2])?r[2]:f1(r[2])):r[2];
+    return "<tr"+(i===rows.length-1?" class='hi'":"")+"><td class='step'>"+(i+1)+
+      "</td><td>"+r[0]+"</td><td class='sym'>"+r[1]+"</td><td class='val'>"+val+
+      "</td><td class='src'>"+r[3]+"</td></tr>";
+  }).join("");
+}
+
+function ndtOut(){
+  var lim=LIM.n, red=Math.min(10,lim), yellow=Math.max(0,Math.min(30,lim-red));
+  var rows=[["Red flag, plugged",red+" of 10"],
+            ["Yellow flag, plugged",yellow+" of 30"],
+            ["Total plugged",(red+yellow)+" of "+lim+" allowed"],
+            ["Yellow flag left in service",(30-yellow)+""]];
+  document.querySelector("#ndtOut tbody").innerHTML=rows.map(function(r){
+    return "<tr><td>"+r[0]+"</td><td class='n'>"+r[1]+"</td></tr>";}).join("");
+  var s40=state(40,null);
+  document.getElementById("ndtCap").innerHTML=
+    "Plugging every flagged tube &mdash; all 40 &mdash; would leave A<sub>a</sub> = "+f2(s40.Aa)+
+    " m² against A<sub>r</sub> = "+f2(s40.Ar)+" m², a deficit of "+f2(-s40.margin)+
+    " m². So the answer is not a re-tube: the limit of "+lim+" comfortably covers every red flag, and "+
+    yellow+" of the yellow flags go in too. The remaining "+(30-yellow)+
+    " stay in service and go on the watch list for the next shutdown.";
+}
+
+document.getElementById("commit").addEventListener("click",function(){
+  var n=+slider.value, s=state(n,null), v=document.getElementById("verdict");
+  var lim=LIM.n, title, body, cls;
+  if(n===lim){
+    cls="good"; title="Exactly right.";
+    body="A available "+f2(s.Aa)+" m² against "+f2(s.Ar)+" m² required — the last whole tube with "+
+         "margin. Note how thin it is: "+s.margin.toFixed(3)+" m², about "+
+         (100*s.margin/s.Ar).toFixed(2)+"%. A 1% error anywhere in Ud or F moves this limit between "+
+         "21 and 26, so sign it off as \u201cabout "+lim+"\u201d and keep the tubes you skip on the "+
+         "watch list.";
+  } else if(n<lim && n>=lim-3){
+    cls="good"; title="Operable, and close to the limit.";
+    body="You could have plugged "+(lim-n)+" more. Not a bad place to sit: the margin you kept is "+
+         f2(s.margin)+" m², which is real protection against the fouling this rating ignores.";
+  } else if(n<lim){
+    cls="warn"; title="Safe, but you left "+(lim-n)+" tubes on the table.";
+    body="This runs with "+f2(s.margin)+" m² to spare. Every yellow-flag tube you decline to plug now "+
+         "is one that may leak before the next shutdown, and an unplanned leak costs more than the area does.";
+  } else if(n>lim && s.margin>-0.25){
+    cls="warn"; title="On the boundary.";
+    body="A available "+f2(s.Aa)+" m², A required "+f2(s.Ar)+" m² — short by "+
+         (-s.margin).toFixed(3)+" m², about "+(-100*s.margin/s.Ar).toFixed(2)+
+         "%. That sits inside the uncertainty in hi and F, so it is not meaningfully different from "+
+         "the limit itself. The answer is a band, not a line.";
+  } else {
+    cls="bad"; title="Not operable.";
+    body="At "+n+" plugged you have "+f2(s.Aa)+" m² of surface and need "+f2(s.Ar)+" m² — a deficit of "+
+         f2(-s.margin)+" m². The higher velocity does raise h"+String.fromCharCode(7522)+
+         ", but not fast enough to make up for the area you removed.";
+  }
+  v.className="verdict "+cls;
+  document.getElementById("vTitle").textContent=title;
+  document.getElementById("vBody").textContent=body;
+  document.getElementById("vN").textContent=n;
+  document.getElementById("vLim").textContent=lim;
+  document.getElementById("vAa").textContent=f2(s.Aa)+" m²";
+  document.getElementById("vAr").textContent=f2(s.Ar)+" m²";
+  document.getElementById("capArea").innerHTML=
+    "Both curves fall, but A<sub>available</sub> falls in a straight line while A<sub>required</sub> "+
+    "flattens out — the velocity gain has diminishing returns. They cross at n = "+LIM.cross.toFixed(2)+
+    ", so "+LIM.n+" is the last whole tube with margin — though only just, and a 1% shift in Ud "+
+    "or F would move it a few tubes either way."+
+    (REGN!==null?" At "+REGN+" plugged, Re passes 10,000 and the correlation switches to turbulent; h<sub>i</sub> "+
+    "steps down there, which is why A<sub>required</sub> jumps up. That kink is the correlation, not the physics — "+
+    "real transition is gradual.":"");
+  debrief.classList.remove("hidden");
+  areaChart(n); chain(n); ndtOut(); sandbox();
+  debrief.focus({preventScroll:true});
+  debrief.scrollIntoView({behavior:"smooth",block:"start"});
+});
+document.getElementById("again").addEventListener("click",function(){
+  document.getElementById("callsec").scrollIntoView({behavior:"smooth",block:"start"});
+  slider.focus({preventScroll:true});
+});
+
+function sandbox(){
+  var ho=+document.getElementById("sHo").value,
+      mc=+document.getElementById("sMc").value,
+      nt=+document.getElementById("sNT").value;
+  document.getElementById("lHo").textContent=ho;
+  document.getElementById("lMc").textContent=mc.toFixed(2);
+  document.getElementById("lNT").textContent=nt;
+  var C={ho:ho,mc:mc,nt:nt};
+  var D=duty(C), L=limitOf(C), s0=state(0,C);
+  if(!D){
+    document.getElementById("sLim").textContent="impossible";
+    document.getElementById("sQ").textContent=Math.round(Q0*mc/MC0/1000).toLocaleString("en-US")+" kW";
+    document.getElementById("sTho").textContent=f1(THI-(Q0*mc/MC0)/CH)+" °C";
+    document.getElementById("sF").textContent="—";
+    document.getElementById("sCtrl").textContent="beyond 1-2 pass";
+    return;
+  }
+  document.getElementById("sLim").textContent=(L.n<0?"cannot meet duty":L.n+" tubes");
+  document.getElementById("sQ").textContent=Math.round(D.Q/1000).toLocaleString("en-US")+" kW";
+  document.getElementById("sTho").textContent=f1(D.tho)+" °C";
+  document.getElementById("sF").textContent=D.F.toFixed(3);
+  var s=state(Math.max(0,L.n<0?0:L.n),C);
+  if(s){
+    var rIn=1/s.hi, rOut=1/ho;
+    document.getElementById("sCtrl").textContent=
+      (rOut>rIn?"shell "+Math.round(rOut/(rIn+rOut)*100)+"%":"tube "+Math.round(rIn/(rIn+rOut)*100)+"%");
+  } else document.getElementById("sCtrl").textContent="—";
+}
+["sHo","sMc","sNT"].forEach(function(id){
+  document.getElementById(id).addEventListener("input",sandbox);
+});
+document.getElementById("sReset").addEventListener("click",function(){
+  document.getElementById("sHo").value=450; document.getElementById("sMc").value=6.07;
+  document.getElementById("sNT").value=230; sandbox();
+});
+
+var rz=null, lastW=window.innerWidth;
+window.addEventListener("resize",function(){
+  if(window.innerWidth===lastW) return;
+  lastW=window.innerWidth;
+  clearTimeout(rz);
+  rz=setTimeout(function(){ if(!debrief.classList.contains("hidden")) areaChart(+slider.value); },160);
+});
+
+window.PLUGMODEL={state:state,limitOf:limitOf,nusselt:nusselt,niceTicks:niceTicks,
+  duty:duty,Fof:Fof,LIM:LIM,REGN:REGN,Q0:Q0,PR:PR};
+})();
+</script>
+</body>
+</html>
